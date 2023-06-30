@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useState } from 'react';
 import ImagesApiService from 'services/images-api-service';
 import Searchbar from 'components/Searchbar';
 import ImageGallery from 'components/ImageGallery';
@@ -10,17 +10,32 @@ const { Container, ErrorText } = css;
 
 const imagesApiService = new ImagesApiService();
 
-class App extends Component {
-  state = {
-    images: [],
-    totalImages: null,
-    status: 'idle',
-    error: null,
-  };
+const statuses = {
+  idle: 'idle',
+  pending: 'pending',
+  resolved: 'resolved',
+  rejected: 'rejected',
+};
 
-  onSubmit = async (value) => {
+const initialState = {
+  images: [],
+  totalImages: null,
+  status: statuses.idle,
+  error: null,
+};
+
+const App = () => {
+  const [images, setImages] = useState(() => initialState.images);
+  const [totalImages, setTotalImages] = useState(
+    () => initialState.totalImages
+  );
+  const [status, setStatus] = useState(() => initialState.status);
+  const [error, setError] = useState(() => initialState.error);
+
+  const onSubmit = async (value) => {
     try {
-      this.setState({ status: 'pending', images: [] });
+      setStatus(statuses.pending);
+      setImages(initialState.images);
       const searchQuery = value.trim();
       imagesApiService.searchQuery = searchQuery;
       imagesApiService.resetPage();
@@ -30,74 +45,34 @@ class App extends Component {
         throw new Error(`${imagesApiService.searchQuery} not found`);
       }
       const totalImages = response.totalHits;
-      this.setState({
-        images: [...newImages],
-        totalImages,
-        status: 'resolved',
-      });
+      setImages(newImages);
+      setTotalImages(totalImages);
+      setStatus(statuses.resolved);
     } catch (error) {
-      this.setState({ error: error.message, status: 'rejected' });
+      setError(error.message);
+      setStatus(statuses.rejected);
     }
   };
 
-  onLoadMore = async () => {
-    this.setState({ status: 'pending' });
+  const onLoadMore = async () => {
+    setStatus(statuses.pending);
     const response = await imagesApiService.fetchImages();
     const images = response.hits;
-    this.setState(({ images: prevImages }) => ({
-      images: [...prevImages, ...images],
-      status: 'resolved',
-    }));
+    setImages((prevState) => [...prevState, ...images]);
+    setStatus(statuses.resolved);
   };
 
-  render() {
-    const { status, images, totalImages, error } = this.state;
-
-    if (status === 'idle') {
-      return (
-        <Container>
-          <Searchbar onSubmit={this.onSubmit} />
-          {!!images.length && <ImageGallery items={images} />}
-        </Container>
-      );
-    }
-
-    if (status === 'pending') {
-      return (
-        <Container>
-          <Searchbar onSubmit={this.onSubmit} />
-          {!!images.length && <ImageGallery items={images} />}
-          <Loader />
-        </Container>
-      );
-    }
-
-    if (status === 'resolved') {
-      return (
-        <Container>
-          <Searchbar onSubmit={this.onSubmit} />
-          {!!images.length && <ImageGallery items={images} />}
-          {images.length !== totalImages && (
-            <Button onBtnClick={this.onLoadMore} />
-          )}
-        </Container>
-      );
-    }
-
-    if (status === 'rejected') {
-      return (
-        <Container>
-          <Searchbar onSubmit={this.onSubmit} />
-          {!!images.length && <ImageGallery items={images} />}
-          <ErrorText>{error}</ErrorText>
-        </Container>
-      );
-    }
-
-    //
-    //
-    //
-  }
-}
+  return (
+    <Container>
+      <Searchbar onSubmit={onSubmit} />
+      {!!images.length && <ImageGallery items={images} />}
+      {status !== statuses.idle &&
+        status !== statuses.pending &&
+        images.length !== totalImages && <Button onBtnClick={onLoadMore} />}
+      {status === statuses.pending && <Loader />}
+      {status === statuses.rejected && <ErrorText>{error}</ErrorText>}
+    </Container>
+  );
+};
 
 export default App;
