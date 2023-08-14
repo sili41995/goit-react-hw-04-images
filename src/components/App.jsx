@@ -16,15 +16,11 @@ export const App = () => {
   );
   const [page, setPage] = useState(() => initialState.page);
   const [images, setImages] = useState(() => initialState.images);
-  const [error, setError] = useState(() => initialState.error);
+  const [, setError] = useState(() => initialState.error);
   const [totalImages, setTotalImages] = useState(
     () => initialState.totalImages
   );
   const [status, setStatuses] = useState(() => initialState.status);
-
-  useEffect(() => {
-    error && errorToast(error);
-  }, [error]);
 
   useEffect(() => {
     async function getImages(searchQuery, page) {
@@ -40,6 +36,7 @@ export const App = () => {
         successToast('Images uploaded');
       } catch (error) {
         setError(error.message);
+        errorToast(error.message);
         setStatuses(statuses.rejected);
       }
     }
