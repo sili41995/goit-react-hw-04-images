@@ -21,56 +21,59 @@ export const App = () => {
     () => initialState.totalImages
   );
   const [status, setStatuses] = useState(() => initialState.status);
+  const { pending, resolved, rejected } = statuses;
+  const imagesLength = images.length;
 
   useEffect(() => {
     async function getImages(searchQuery, page) {
       try {
-        setStatuses(statuses.pending);
+        setStatuses(pending);
         const { hits: newImages, totalHits } = await fetchImages(
           searchQuery,
           page
         );
         setImages((prevState) => [...prevState, ...newImages]);
         setTotalImages(totalHits);
-        setStatuses(statuses.resolved);
+        setStatuses(resolved);
         successToast('Images uploaded');
-      } catch (error) {
-        setError(error.message);
-        errorToast(error.message);
-        setStatuses(statuses.rejected);
+      } catch ({ message }) {
+        setError(message);
+        errorToast(message);
+        setStatuses(rejected);
       }
     }
 
     searchQuery && getImages(searchQuery, page);
-  }, [page, searchQuery]);
+  }, [page, pending, rejected, resolved, searchQuery]);
 
-  const lastPage = totalImages === images.length;
+  const lastPage = totalImages === imagesLength;
 
   const onLoadMoreBtnClick = () => {
     setPage((prevState) => prevState + 1);
   };
 
   const onSubmitForm = ({ query }) => {
+    const { page, images, error, totalImages, status } = initialState;
     if (!query.trim()) {
       errorToast('Please, enter search query!');
       return;
     }
     setSearchQuery(query);
-    setPage(initialState.page);
-    setImages(initialState.images);
-    setError(initialState.error);
-    setTotalImages(initialState.totalImages);
-    setStatuses(initialState.status);
+    setPage(page);
+    setImages(images);
+    setError(error);
+    setTotalImages(totalImages);
+    setStatuses(status);
   };
 
   return (
     <>
       <Searchbar onSubmit={onSubmitForm} />
       <Container>
-        {!!images.length && <ImageGallery images={images} />}
-        {status === statuses.pending && <Loader />}
-        {!!images.length &&
-          (status === statuses.resolved || status === statuses.rejected) &&
+        {!!imagesLength && <ImageGallery images={images} />}
+        {status === pending && <Loader />}
+        {!!imagesLength &&
+          (status === resolved || status === rejected) &&
           !lastPage && <Button onLoadMoreBtnClick={onLoadMoreBtnClick} />}
       </Container>
       <Notification />
