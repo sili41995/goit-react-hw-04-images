@@ -11,12 +11,16 @@ import { errorToast, successToast } from 'utils/toasts';
 import initialState from 'constants/initialState';
 
 export const App = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [page, setPage] = useState(1);
-  const [images, setImages] = useState([]);
-  const [error, setError] = useState(null);
-  const [totalImages, setTotalImages] = useState(null);
-  const [status, setStatuses] = useState();
+  const [searchQuery, setSearchQuery] = useState(
+    () => initialState.searchQuery
+  );
+  const [page, setPage] = useState(() => initialState.page);
+  const [images, setImages] = useState(() => initialState.images);
+  const [error, setError] = useState(() => initialState.error);
+  const [totalImages, setTotalImages] = useState(
+    () => initialState.totalImages
+  );
+  const [status, setStatuses] = useState(() => initialState.status);
 
   useEffect(() => {
     error && errorToast(error);
