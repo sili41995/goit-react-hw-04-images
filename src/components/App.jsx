@@ -1,7 +1,6 @@
-import React, { Component } from 'react';
+import React, { useEffect, useState } from 'react';
 import fetchImages from 'service/fetchImages';
 import statuses from 'constants/statuses';
-import initialState from 'constants/initialState';
 import Searchbar from 'components/Searchbar';
 import ImageGallery from 'components/ImageGallery';
 import Button from 'components/Button';
@@ -9,77 +8,73 @@ import Loader from 'components/Loader';
 import Container from 'components/Container';
 import Notification from 'components/Notification';
 import { errorToast, successToast } from 'utils/toasts';
+import initialState from 'constants/initialState';
 
-class App extends Component {
-  state = {
-    ...initialState,
-    status: statuses.idle,
+export const App = () => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [images, setImages] = useState([]);
+  const [error, setError] = useState(null);
+  const [totalImages, setTotalImages] = useState(null);
+  const [status, setStatuses] = useState();
+
+  useEffect(() => {
+    error && errorToast(error);
+  }, [error]);
+
+  useEffect(() => {
+    async function getImages(searchQuery, page) {
+      try {
+        setStatuses(statuses.pending);
+        const { hits: newImages, totalHits } = await fetchImages(
+          searchQuery,
+          page
+        );
+        setImages((prevState) => [...prevState, ...newImages]);
+        setTotalImages(totalHits);
+        setStatuses(statuses.resolved);
+        successToast('Images uploaded');
+      } catch (error) {
+        setError(error.message);
+        setStatuses(statuses.rejected);
+      }
+    }
+
+    searchQuery && getImages(searchQuery, page);
+  }, [page, searchQuery]);
+
+  const lastPage = totalImages === images.length;
+
+  const onLoadMoreBtnClick = () => {
+    setPage((prevState) => prevState + 1);
   };
 
-  componentDidUpdate(_, prevState) {
-    const { searchQuery, page } = this.state;
-    const isUpdate =
-      prevState.searchQuery !== searchQuery || prevState.page !== page;
-    if (isUpdate) {
-      this.getImages(searchQuery, page);
-    }
-  }
-
-  getImages = async (searchQuery, page) => {
-    try {
-      this.setState({ status: statuses.pending });
-      const { hits: newImages, totalHits } = await fetchImages(
-        searchQuery,
-        page
-      );
-      this.setState(({ images }) => ({
-        images: [...images, ...newImages],
-        status: statuses.resolved,
-        totalImages: totalHits,
-      }));
-      successToast('Images uploaded');
-    } catch (error) {
-      this.setState({ error: error.message, status: statuses.rejected });
-      errorToast(error.message);
-    }
-  };
-
-  onSubmitForm = ({ query }) => {
+  const onSubmitForm = ({ query }) => {
     if (!query.trim()) {
       errorToast('Please, enter search query!');
       return;
     }
-
-    this.setState({
-      ...initialState,
-      searchQuery: query,
-    });
+    setSearchQuery(query);
+    setPage(initialState.page);
+    setImages(initialState.images);
+    setError(initialState.error);
+    setTotalImages(initialState.totalImages);
+    setStatuses(initialState.status);
   };
 
-  onLoadMoreBtnClick = () => {
-    this.setState(({ page }) => ({ page: page + 1 }));
-  };
-
-  render() {
-    const { images, status, totalImages } = this.state;
-    const lastPage = totalImages === images.length;
-
-    return (
-      <>
-        <Searchbar onSubmit={this.onSubmitForm} />
-        <Container>
-          {!!images.length && <ImageGallery images={images} />}
-          {status === statuses.pending && <Loader />}
-          {!!images.length &&
-            (status === statuses.resolved || status === statuses.rejected) &&
-            !lastPage && (
-              <Button onLoadMoreBtnClick={this.onLoadMoreBtnClick} />
-            )}
-        </Container>
-        <Notification />
-      </>
-    );
-  }
-}
+  return (
+    <>
+      <Searchbar onSubmit={onSubmitForm} />
+      <Container>
+        {!!images.length && <ImageGallery images={images} />}
+        {status === statuses.pending && <Loader />}
+        {!!images.length &&
+          (status === statuses.resolved || status === statuses.rejected) &&
+          !lastPage && <Button onLoadMoreBtnClick={onLoadMoreBtnClick} />}
+      </Container>
+      <Notification />
+    </>
+  );
+};
 
 export default App;

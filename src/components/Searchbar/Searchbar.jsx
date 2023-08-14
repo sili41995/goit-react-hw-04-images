@@ -1,24 +1,24 @@
-import { Formik } from 'formik';
+import { useForm } from 'react-hook-form';
 import PropTypes from 'prop-types';
 import { FcSearch } from 'react-icons/fc';
 import { Header, SearchForm, Button, Input } from './Searchbar.styled';
 
 const Searchbar = ({ onSubmit }) => {
+  const { register, handleSubmit } = useForm();
+
   return (
     <Header>
-      <Formik initialValues={{ query: '' }} onSubmit={onSubmit}>
-        <SearchForm>
-          <Button type='submit'>
-            <FcSearch />
-          </Button>
-          <Input
-            name='query'
-            type='text'
-            autoComplete='off'
-            placeholder='Search images and photos'
-          />
-        </SearchForm>
-      </Formik>
+      <SearchForm onSubmit={handleSubmit(onSubmit)}>
+        <Button type='submit'>
+          <FcSearch />
+        </Button>
+        <Input
+          type='text'
+          autoComplete='off'
+          placeholder='Search images and photos'
+          {...register('query')}
+        />
+      </SearchForm>
     </Header>
   );
 };
