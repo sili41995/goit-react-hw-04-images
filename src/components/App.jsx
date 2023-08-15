@@ -16,7 +16,6 @@ export const App = () => {
   );
   const [page, setPage] = useState(() => initialState.page);
   const [images, setImages] = useState(() => initialState.images);
-  const [, setError] = useState(() => initialState.error);
   const [totalImages, setTotalImages] = useState(
     () => initialState.totalImages
   );
@@ -36,7 +35,6 @@ export const App = () => {
         setStatuses(statuses.resolved);
         successToast('Images uploaded');
       } catch ({ message }) {
-        setError(message);
         errorToast(message);
         setStatuses(statuses.rejected);
       }
@@ -50,7 +48,7 @@ export const App = () => {
   };
 
   const onSubmitForm = ({ query }) => {
-    const { page, images, error, totalImages, status } = initialState;
+    const { page, images, totalImages, status } = initialState;
     if (!query.trim()) {
       errorToast('Please, enter search query!');
       return;
@@ -58,7 +56,6 @@ export const App = () => {
     setSearchQuery(query);
     setPage(page);
     setImages(images);
-    setError(error);
     setTotalImages(totalImages);
     setStatuses(status);
   };
