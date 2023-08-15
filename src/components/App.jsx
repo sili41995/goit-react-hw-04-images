@@ -21,7 +21,6 @@ export const App = () => {
     () => initialState.totalImages
   );
   const [status, setStatuses] = useState(() => initialState.status);
-  const { pending, resolved, rejected } = statuses;
   const imagesLength = images.length;
 
   useEffect(() => {
@@ -46,8 +45,6 @@ export const App = () => {
     searchQuery && getImages(searchQuery, page);
   }, [page, searchQuery]);
 
-  const lastPage = totalImages === imagesLength;
-
   const onLoadMoreBtnClick = () => {
     setPage((prevState) => prevState + 1);
   };
@@ -65,6 +62,9 @@ export const App = () => {
     setTotalImages(totalImages);
     setStatuses(status);
   };
+
+  const lastPage = totalImages === imagesLength;
+  const { pending, resolved, rejected } = statuses;
 
   return (
     <>
