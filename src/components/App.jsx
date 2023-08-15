@@ -27,24 +27,24 @@ export const App = () => {
   useEffect(() => {
     async function getImages(searchQuery, page) {
       try {
-        setStatuses(pending);
+        setStatuses(statuses.pending);
         const { hits: newImages, totalHits } = await fetchImages(
           searchQuery,
           page
         );
         setImages((prevState) => [...prevState, ...newImages]);
         setTotalImages(totalHits);
-        setStatuses(resolved);
+        setStatuses(statuses.resolved);
         successToast('Images uploaded');
       } catch ({ message }) {
         setError(message);
         errorToast(message);
-        setStatuses(rejected);
+        setStatuses(statuses.rejected);
       }
     }
 
     searchQuery && getImages(searchQuery, page);
-  }, [page, pending, rejected, resolved, searchQuery]);
+  }, [page, searchQuery]);
 
   const lastPage = totalImages === imagesLength;
 
